@@ -1,8 +1,10 @@
 # SPHERE
 
 import hitable
-from vector import vec3
+from vector import vec3, unit_vector
 import numpy as np
+
+import functools as ft
 
 
 class Sphere(object):
@@ -12,9 +14,9 @@ class Sphere(object):
 
     def intersect(self, r, t_min, t_max, rec):
         oc = r.origin() - self.center
-        a = np.dot(r.direction(), r.direction())
-        b = np.dot(oc, r.direction())
-        c = np.dot(oc, oc) - (self.radius*self.radius)
+        a = r.direction().dot(r.direction())
+        b = oc.dot(r.direction())
+        c = oc.dot(oc) - (self.radius*self.radius)
         disc = b*b - a*c
 
         sq = np.sqrt(np.maximum(0, disc))
@@ -27,7 +29,7 @@ class Sphere(object):
         hit = (disc > 0) & (h > 0)
         dist = np.where(hit, h, 1.0e39)
 
-        rec.t = h
+        rec.t = dist
         rec.p = r.point_at_parameter(rec.t)
-        rec.normal = (rec.p - self.center) / self.radius
+        rec.normal = unit_vector((rec.p - self.center) / vec3(self.radius, self.radius, self.radius))
         return dist

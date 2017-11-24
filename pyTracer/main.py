@@ -1,3 +1,4 @@
+import functools as ft
 import numpy as np
 import time
 
@@ -10,40 +11,33 @@ from imageo import output_image
 rgb = vec3
 
 
-def hit_sphere(center, radius, r):
-    oc = r.origin() - center
-    a = r.direction().dot(r.direction())
-    b = 2.0 * oc.dot(r.direction())
-    c = oc.dot(oc) - radius*radius
-    disc = b*b - a*c*4.0
-
-    sq = np.sqrt(np.maximum(0, disc))
-    # h0 = (-b - sq) / 2
-    # h1 = (-b + sq) / 2
-    # h = np.where((h0 > 0) & (h0 < h1), h0, h1)
-
-    # hit = (disc > 0) & (h > 0)
-    return np.where(disc < 0, -1.0, (-b - sq) / (a * 2.0))
-
-
+# Class to store hit data
 class hit_record(object):
     __slots__ = ('t', 'p', 'normal')
 
 
 def raytrace(r, scene):
-    hitpts = hit_sphere(vec3(0.0, 0.0, -1.0), 0.4, r)
-    m = np.copy(hitpts)
+    hit_rec = hit_record()
 
-    unit_direction = unit_vector(r.direction())
-    t = 0.5*(unit_direction.y + 1.0)
+    # Determine the closest hits
+    distances = [s.intersect(r, 0.0, 1.0e39, hit_rec) for s in scene]
+    nearest = ft.reduce(np.minimum, distances)
 
-    mask = np.where(m > 0.0, 0, 1)
+    color = rgb(0.0, 0.0, 0.0)
 
-    N = (r.point_at_parameter(t) - vec3(0.0, 0.0, -1.0)) * (1.0 / 0.4)
-    Nc = (vec3(N.x + 1, N.y+1, N.z+1) * 0.5)
-    color = (vec3(1.0, 1.0, 1.0)*(1.0 - t) + vec3(0.5, 0.7, 1.0)*t)*mask + (Nc * (1-mask))
+    # unit_direction = unit_vector(r.direction())
+    # t = 0.5*(unit_direction.y + 1.0)
+    # bg = (vec3(1.0, 1.0, 1.0)*(1.0 - t) + vec3(0.5, 0.7, 1.0)*t)
 
-    return(color)
+    for (s, d) in zip(scene, distances):
+        p = r.point_at_parameter(d)
+        N = (p - s.center) / vec3(s.radius, s.radius, s.radius)
+        Nc = (vec3(N.x + 1, N.y+1, N.z+1) * 0.5)
+        color += Nc * (nearest != 1.0e39) * (d == nearest)
+
+    # color += bg * (distances == nearest)
+    # return vec3(nearest, nearest, nearest)
+    return color
 
 
 def main():
@@ -80,7 +74,7 @@ def main():
     v = vertical * rdir.y
     direction = lower_left_corner + u + v
     iray = ray(origin, direction)
-    colorRet = raytrace(iray)
+    colorRet = raytrace(iray, world)
 
     print("Took %s" % (time.time() - t0))
 

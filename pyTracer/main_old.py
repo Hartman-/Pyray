@@ -145,7 +145,7 @@ def simpleRaycast():
     Image.merge("RGB", rgb).save("output/output_simpleRayCast.png")
 
 
-def hit_sphere(center, radius, r):
+def hit_sphere_bad(center, radius, r):
     oc = r.origin() - center
     a = r.direction().dot(r.direction())
     b = 2.0 * oc.dot(r.direction())
@@ -154,6 +154,21 @@ def hit_sphere(center, radius, r):
     return np.where((disc < 0) > 0, -1, 1)
 
 
+def hit_sphere(center, radius, r):
+    oc = r.origin() - center
+    a = r.direction().dot(r.direction())
+    b = 2.0 * oc.dot(r.direction())
+    c = oc.dot(oc) - radius*radius
+    disc = b*b - a*c*4.0
+
+    sq = np.sqrt(np.maximum(0, disc))
+    # h0 = (-b - sq) / 2
+    # h1 = (-b + sq) / 2
+    # h = np.where((h0 > 0) & (h0 < h1), h0, h1)
+
+    # hit = (disc > 0) & (h > 0)
+    return np.where(disc < 0, -1.0, (-b - sq) / (a * 2.0))
+
 def color(r):
     hitpts = hit_sphere(vec3(0.0, 0.0, -1.0), 0.4, r)
 
@@ -161,6 +176,22 @@ def color(r):
     t = 0.5*(unit_direction.y + 1.0)
     
     color = (vec3(1.0, 1.0, 1.0)*(1.0 - t) + vec3(0.5, 0.7, 1.0)*t)*hitpts + (vec3(1.0, 0.0, 0.0)*(1 - hitpts))
+    return(color)
+
+
+def raytrace_OLD(r, scene):
+    hitpts = hit_sphere(vec3(0.0, 0.0, -1.0), 0.4, r)
+    m = np.copy(hitpts)
+
+    unit_direction = unit_vector(r.direction())
+    t = 0.5*(unit_direction.y + 1.0)
+
+    mask = np.where(m > 0.0, 0, 1)
+
+    N = (r.point_at_parameter(t) - vec3(0.0, 0.0, -1.0)) * (1.0 / 0.4)
+    Nc = (vec3(N.x + 1, N.y+1, N.z+1) * 0.5)
+    color = (vec3(1.0, 1.0, 1.0)*(1.0 - t) + vec3(0.5, 0.7, 1.0)*t)*mask + (Nc * (1-mask))
+
     return(color)
 
 
