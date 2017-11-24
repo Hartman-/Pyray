@@ -1,10 +1,12 @@
 import functools as ft
 import numpy as np
+import random
 import time
 
 from vector import vec3, unit_vector
 from ray import ray
 from sphere import Sphere
+from camera import camera
 
 from imageo import output_image
 
@@ -43,14 +45,14 @@ def raytrace(r, scene):
 def main():
     t0 = time.time()
 
-    nx = 200
-    ny = 100
+    nx = 400
+    ny = 200
 
     world = [Sphere(vec3(0, 0, -1), 0.5), Sphere(vec3(0, -100.5, -1), 100)]
 
     # Build array of vectors defined on a normalized plane
     # aspect ratio
-    # r = float(nx) / float(ny)
+    # ratio = float(nx) / float(ny)
     # normalized range
     S = (0., 1., 1., 0.)
     # linearly step through each xy pixel and create vector position
@@ -59,26 +61,26 @@ def main():
     npz = np.repeat(0.0, (nx * ny))
 
     origin = vec3(0.0, 0.0, 0.0)
-
+    color = vec3(0, 0, 0)
+    cam = camera()
     # test = ray(origin, lower_left_corner + npx*horizontal + npy*vertical)
     # print(test)
 
     Q = vec3(npx, npy, npz)
     rdir = Q - origin
 
-    lower_left_corner = vec3(-2.0, -1.0, -1.0)
-    horizontal = vec3(4.0, 0.0, 0.0)
-    vertical = vec3(0.0, 2.0, 0.0)
+    ns = 16
+    for s in range(16):
+        u = rdir.x + (random.random() / float(nx))
+        v = rdir.y + (random.random() / float(ny))
+        r = cam.get_ray(u, v)
+        # p = r.point_at_parameter(2.0)
+        color += raytrace(r, world)
 
-    u = horizontal * rdir.x
-    v = vertical * rdir.y
-    direction = lower_left_corner + u + v
-    iray = ray(origin, direction)
-    colorRet = raytrace(iray, world)
-
+    color = color / vec3(ns, ns, ns)
     print("Took %s" % (time.time() - t0))
 
-    output_image(colorRet, nx, ny)
+    output_image(color, nx, ny)
 
 if __name__ == "__main__":
     main()

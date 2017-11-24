@@ -1,6 +1,6 @@
 # camera.py
 
-import ray
+from ray import ray
 from vector import vec3
 
 
