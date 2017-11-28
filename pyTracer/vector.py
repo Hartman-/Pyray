@@ -33,6 +33,9 @@ class vec3():
     def components(self):
         return (self.x, self.y, self.z)
 
+    def squared_length(self):
+        return self.x*self.x + self.y*self.y + self.z*self.z
+
 
 def unit_vector(v):
     vl = v.length()
