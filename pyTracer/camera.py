@@ -2,6 +2,7 @@
 
 from ray import ray
 from vector import vec3
+import numpy as np
 
 
 class camera(object):
@@ -14,5 +15,12 @@ class camera(object):
     def get_ray(self, u, v):
         nu = self.horz * u
         nv = self.vert * v
-        direction = self.llc + nu + nv - self.origin
-        return ray(self.origin, direction)
+
+        l = nu.components()[0].shape
+        ox = np.repeat(self.origin.x, l)
+        oy = np.repeat(self.origin.y, l)
+        oz = np.repeat(self.origin.z, l)
+        no = vec3(ox, oy, oz)
+
+        direction = self.llc + nu + nv - no
+        return ray(no, direction)

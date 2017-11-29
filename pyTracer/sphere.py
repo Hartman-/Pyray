@@ -12,7 +12,7 @@ class Sphere(object):
         self.center = center
         self.radius = radius
 
-    def intersect(self, r, t_min, t_max, rec):
+    def intersect(self, r, t_min, t_max):
         oc = r.origin() - self.center
         a = r.direction().dot(r.direction())
         b = oc.dot(r.direction())
@@ -24,12 +24,8 @@ class Sphere(object):
         h0 = (-b - sq)/a
         h1 = (-b + sq)/a
 
-        h = np.where((h0 > 0) & (h0 < h1), h0, h1)
+        h = np.where((h0 > t_min) & (h0 < h1), h0, h1)
 
         hit = (disc > 0) & (h > 0)
         dist = np.where(hit, h, 1.0e39)
-
-        rec.t = dist
-        rec.p = r.point_at_parameter(rec.t)
-        rec.normal = unit_vector((rec.p - self.center) / vec3(self.radius, self.radius, self.radius))
         return dist

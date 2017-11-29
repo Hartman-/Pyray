@@ -1,6 +1,7 @@
 import functools as ft
 import numpy as np
 import random
+import sys
 import time
 
 from vector import vec3, unit_vector
@@ -11,6 +12,7 @@ from camera import camera
 from imageo import output_image
 
 rgb = vec3
+sys.setrecursionlimit(1500)
 
 
 # Class to store hit data
@@ -28,32 +30,42 @@ def random_in_unit_sphere():
 
 
 def raytrace(r, scene, bounce=0):
-    hit_rec = hit_record()
 
     # Determine the closest hits
-    distances = [s.intersect(r, 0.0, 1.0e39, hit_rec) for s in scene]
+    distances = [s.intersect(r, 0.0001, 1.0e39) for s in scene]
     nearest = ft.reduce(np.minimum, distances)
 
-    color = rgb(0.05, 0.05, 0.05)
+    # Ambient
+    color = rgb(0.0, 0.0, 0.0)
 
-    # unit_direction = unit_vector(r.direction())
-    # t = 0.5*(unit_direction.y + 1.0)
-    # bg = (vec3(1.0, 1.0, 1.0)*(1.0 - t) + vec3(0.5, 0.7, 1.0)*t)
+    unit_dir = unit_vector(r.direction())
+    t = (unit_dir.y + 1.0)*0.5
+    bgc = (vec3(1.0, 1.0, 1.0)*(1.0 - t) + vec3(0.5, 0.7, 1.0)*t)
+    print('BOUNCE: %s' % bounce)
 
     for (s, d) in zip(scene, distances):
-        p = r.point_at_parameter(d)
-        N = (p - s.center) / vec3(s.radius, s.radius, s.radius)
-        target = p + N + random_in_unit_sphere()
+        hit = (nearest != 1.0e39) & (d == nearest)
+        # output_image(vec3(hit.astype(float), hit.astype(float), hit.astype(float)), 400, 200)
+        
+        print(hit.shape)
+        if np.any(hit) and bounce < 5:
+            dc = np.extract(hit, d)
+            oc = r.origin().extract(hit)
+            dirc = r.direction().extract(hit)
+            er = ray(oc, dirc)
 
-        # Nc = (vec3(N.x + 1, N.y+1, N.z+1) * 0.5)
-        # color += Nc * (nearest != 1.0e39) * (d == nearest)
-        # nr = ray(p, target-p)
-        lv = np.maximum(N.dot(target), 0)
+            p = er.point_at_parameter(dc)
+            N = (p - s.center) / vec3(s.radius, s.radius, s.radius)
+            target = p + N + random_in_unit_sphere()
 
-        # color += vec3(0.05, 0.05, 0.05) + raytrace(nr, scene, bounce=bounce+1)*0.5 * (nearest != 1.0e39) * (d == nearest)
-        color += vec3(0.1, 0.1, 0.1) * lv * (nearest != 1.0e39) * (d == nearest)
-        # color += raytrace(nr, scene)*0.5 * (nearest != 1.0e39) * (d == nearest)
-        print(color.components())
+            # Nc = (vec3(N.x + 1, N.y+1, N.z+1) * 0.5)
+            # color += Nc * (nearest != 1.0e39) * (d == nearest)
+            nr = ray(p, target-p)
+
+            # color += vec3(0.05, 0.05, 0.05) + raytrace(nr, scene, bounce=bounce+1)*0.5 * (nearest != 1.0e39) * (d == nearest)
+            cc = raytrace(nr, scene, bounce=bounce+1)*0.5
+
+            color += cc.place(hit)
     # color += bg * (distances == nearest)
     # return vec3(nearest, nearest, nearest)
     return color
@@ -86,18 +98,18 @@ def main():
     Q = vec3(npx, npy, npz)
     rdir = Q - origin
 
-    ns = 16
+    ns = 1
     for s in range(ns):
         u = rdir.x + (random.random() / float(nx))
         v = rdir.y + (random.random() / float(ny))
         r = cam.get_ray(u, v)
         # p = r.point_at_parameter(2.0)
-        color += raytrace(r, world)
+        color += raytrace(r, world, 0)
 
     color = color / vec3(ns, ns, ns)
+    # color = vec3(np.sqrt(color.x), np.sqrt(color.y), np.sqrt(color.z)) 
     print("Took %s" % (time.time() - t0))
 
-    print(color.components())
     output_image(color, nx, ny)
 
 if __name__ == "__main__":

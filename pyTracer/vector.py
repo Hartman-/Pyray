@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 
 class vec3():
@@ -35,6 +36,19 @@ class vec3():
 
     def squared_length(self):
         return self.x*self.x + self.y*self.y + self.z*self.z
+
+    def extract(self, cond):
+        return vec3(np.extract(cond, self.x),
+                    np.extract(cond, self.y),
+                    np.extract(cond, self.z))
+
+    def place(self, cond):
+        z = np.zeros(cond.shape)
+        r = vec3(z, z, z)
+        np.place(r.x, cond, self.x)
+        np.place(r.y, cond, self.y)
+        np.place(r.z, cond, self.z)
+        return r
 
 
 def unit_vector(v):
