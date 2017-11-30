@@ -26,6 +26,6 @@ class Sphere(object):
 
         h = np.where((h0 > t_min) & (h0 < h1), h0, h1)
 
-        hit = (disc > 0) & (h > 0)
-        dist = np.where(hit, h, 1.0e39)
+        hit = (disc > t_min) & (h > t_min)
+        dist = np.where(hit, h, t_max)
         return dist

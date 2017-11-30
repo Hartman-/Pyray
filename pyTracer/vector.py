@@ -50,6 +50,13 @@ class vec3():
         np.place(r.z, cond, self.z)
         return r
 
+    def place2(self, cond, bg):
+        r = vec3(bg.x, bg.y, bg.z)
+        np.place(r.x, cond, self.x)
+        np.place(r.y, cond, self.y)
+        np.place(r.z, cond, self.z)
+        return r
+
 
 def unit_vector(v):
     vl = v.length()
