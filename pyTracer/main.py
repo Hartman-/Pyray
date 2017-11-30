@@ -20,16 +20,17 @@ class hit_record(object):
     __slots__ = ('t', 'p', 'normal')
 
 
-def random_in_unit_sphere():
+def random_in_unit_sphere(shape):
     p = vec3(0.0, 0.0, 0.0)
-    while True:
-        p = (vec3(random.random(), random.random(), random.random())*2.0) - vec3(1.0, 1.0, 1.0)
-        if (p.squared_length() < 1.0 and p.squared_length() > 0.001):
-            break
+    # while True:
+        # p = (vec3(np.random.rand(shape), np.random.rand(shape), np.random.rand(shape))*2.0) - vec3(1.0, 1.0, 1.0)
+        # if (p.squared_length() < 1.0 and p.squared_length() > 0.001):
+            # break
+    p = (vec3(np.random.rand(shape), np.random.rand(shape), np.random.rand(shape)).norm()*2.0) - vec3(1.0, 1.0, 1.0)
     return p
 
 
-def raytrace(r, scene, index=0):
+def raytrace(r, scene):
 
     # Determine the closest hits
     distances = [s.intersect(r, 0.001, 1.0e39) for s in scene]
@@ -45,22 +46,23 @@ def raytrace(r, scene, index=0):
     for (s, d) in zip(scene, distances):
         hit = (nearest != 1.0e39) & (d == nearest)
 
-        # print(hit.shape)
+        print(hit.shape)
         if np.any(hit):
             dc = np.extract(hit, d)
             oc = r.origin().extract(hit)
             dirc = r.direction().extract(hit)
             er = ray(oc, dirc)
 
+            p = r.point_at_parameter(d)
             pe = er.point_at_parameter(dc)
 
             N = (pe - s.center) / vec3(s.radius, s.radius, s.radius)
-            # target = p + N + random_in_unit_sphere()
-            target = pe + N.norm() + random_in_unit_sphere()
+            target = pe + N + random_in_unit_sphere(dc.shape[0])
+            # output_image(target-pe, 400, 200)
             # tc = (vec3(target.x + 1, target.y+1, target.z+1) * 0.5)
             # color += Nc * (nearest != 1.0e39) * (d == nearest)
             nr = ray(pe, target-pe)
-            cc = raytrace(nr, scene, index=index+1)*0.5
+            cc = raytrace(nr, scene)*0.5
 
             color += cc.place2(hit, bgc)
             # color += tc * hit.astype(float)
@@ -93,7 +95,7 @@ def main():
     Q = vec3(npx, npy, npz)
     rdir = Q - origin
 
-    ns = 64
+    ns = 32
     for s in range(ns):
         u = rdir.x + (random.random() / float(nx))
         v = rdir.y + (random.random() / float(ny))
