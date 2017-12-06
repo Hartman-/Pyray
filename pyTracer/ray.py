@@ -1,4 +1,4 @@
-class ray():
+class ray(object):
     def __init__(self, o, d):
         self.O = o
         self.D = d

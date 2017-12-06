@@ -2,7 +2,7 @@ import numpy as np
 import copy
 
 
-class vec3():
+class vec3(object):
     def __init__(self, x, y, z):
         (self.x, self.y, self.z) = (x, y, z)
 
@@ -20,6 +20,9 @@ class vec3():
 
     def dot(self, other):
         return (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
+
+    def vecmult(self, other):
+        return vec3(self.x * other.x, self.y * other.y, self.z * other.z)
 
     def __abs__(self):
         return self.dot(self)
