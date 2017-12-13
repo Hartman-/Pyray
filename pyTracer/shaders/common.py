@@ -32,7 +32,8 @@ class lambertian(material):
         self.albedo = a
 
     def scatter(self, r_in, P, N):
-        target = P + N + random_in_unit_sphere(P.x.shape[0])
+        randint = random_in_unit_sphere(P.x.shape[0])
+        target = P + N + randint
         scattered = ray(P, target-P)
         return scattered
 

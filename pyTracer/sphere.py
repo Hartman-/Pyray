@@ -33,3 +33,6 @@ class Sphere(object):
 
     def material(self):
         return self.shader
+
+    def light(self, scene):
+        return self.center
